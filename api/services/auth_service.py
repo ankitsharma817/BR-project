@@ -60,6 +60,18 @@ class AuthService:
             raise HTTPException(status_code=429, detail="Account temporarily locked. Try again later.")
         if not verify_password(password, user.hashed_password):
             self._record_attempt(user, False, ip)
+            # Fire lockout alert when threshold just crossed
+            failure_count = (
+                self.db.query(LoginAttempt)
+                .filter(
+                    LoginAttempt.user_id == user.id,
+                    LoginAttempt.success == False,
+                )
+                .count()
+            )
+            if failure_count >= MAX_LOGIN_ATTEMPTS:
+                from ..tasks.email_tasks import send_lockout_alert_email_task
+                send_lockout_alert_email_task.delay(user.email, ip or "unknown")
             raise HTTPException(status_code=401, detail="Invalid credentials")
 
         self._record_attempt(user, True, ip)
@@ -81,11 +93,18 @@ class AuthService:
             "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         }
 
-    def logout(self, refresh_token: str) -> None:
+    def logout(self, refresh_token: str, access_token: str | None = None) -> None:
         session = self.db.query(UserSession).filter(UserSession.refresh_token == refresh_token).first()
         if session:
             session.revoked = True
             self.db.commit()
+        # Blacklist the access token so it can't be reused
+        if access_token:
+            try:
+                from .token_blacklist import get_blacklist
+                get_blacklist().revoke(access_token)
+            except Exception:
+                pass
 
     def refresh_access_token(self, refresh_token: str) -> dict:
         session = (

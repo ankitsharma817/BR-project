@@ -23,6 +23,16 @@ def get_current_user(
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
+    # Reject blacklisted (logged-out) tokens
+    try:
+        from .services.token_blacklist import get_blacklist
+        if get_blacklist().is_revoked(token):
+            raise HTTPException(status_code=401, detail="Token has been revoked")
+    except HTTPException:
+        raise
+    except Exception:
+        pass  # Redis unavailable — allow through
+
     from .models.user import User
     user = db.get(User, uuid.UUID(user_id))
     if not user or not user.is_active:

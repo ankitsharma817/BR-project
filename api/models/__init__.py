@@ -4,6 +4,7 @@ from .proposal import Proposal, ProposalRequirement
 from .matching import MatchingResult, RequirementMatching, MatchAnalysis, MatchHistory
 from .feedback import Feedback, AILearningLog
 from .audit import AuditLog
+from .webhook import Webhook, WebhookDelivery
 
 __all__ = [
     "User", "Session", "LoginAttempt",
@@ -12,4 +13,5 @@ __all__ = [
     "MatchingResult", "RequirementMatching", "MatchAnalysis", "MatchHistory",
     "Feedback", "AILearningLog",
     "AuditLog",
+    "Webhook", "WebhookDelivery",
 ]

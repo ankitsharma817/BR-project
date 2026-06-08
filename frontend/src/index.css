@@ -1,0 +1,11 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+/* Highlight missing requirement rows */
+.ant-table-tbody .row-missing td {
+  background: #fff2f0 !important;
+}
+
+/* Smooth transitions */
+.ant-card { transition: box-shadow 0.2s; }
+.ant-card:hover { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); }
